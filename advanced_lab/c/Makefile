@@ -6,7 +6,7 @@ CFLAGS = -O2 -openmp -D_Float128=__float128
 else ifeq ($(CRAY_PRGENVGNU), loaded)
 CFLAGS = -O2 -fopenmp
 else
-CFLAGS = -O2
+CFLAGS = -O2 -fopenmp
 endif
 SRC = vtk_export.c shwater2d.c
 OBJS = ${SRC:.c=.o}

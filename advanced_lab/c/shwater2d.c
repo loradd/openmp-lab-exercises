@@ -79,12 +79,12 @@ void laxf_scheme_2d(double *Q, double **ffx, double **ffy, double **nFx, double 
     #pragma omp single
     fx(Q, ffx, m, n, i);
     
-    #pragma omp for collapse(2)
+    #pragma omp for
     for (j = 1; j < m; j++) 
       for (k = 0; k < cell_size;  k++) 
         nFx[k][j] = 0.5 * ((ffx[k][j-1] + ffx[k][j]) - dx/dt * (Q(k, j, i) - Q(k, j-1, i)));
     
-    #pragma omp for collapse(2)
+    #pragma omp for
     for (j = 1; j < m-1; j++)
       for (k = 0; k < cell_size;  k++) 
         Q(k, j, i) = Q(k, j, i)  - dt/dx * ((nFx[k][j+1] - nFx[k][j]));
@@ -96,12 +96,12 @@ void laxf_scheme_2d(double *Q, double **ffx, double **ffy, double **nFx, double 
     #pragma omp single
     fy(Q, ffy, m, n, i);
     
-    #pragma omp for collapse(2)
+    #pragma omp for
     for (j = 1; j < n; j++)
       for (k = 0; k < cell_size; k++)
         nFy[k][j] = 0.5 * ((ffy[k][j-1] + ffy[k][j]) - dy/dt * (Q(k, i, j) - Q(k, i, j -1)));
     
-    #pragma omp for collapse(2)
+    #pragma omp for
     for (j = 1; j <  n-1; j++) 
       for (k = 0; k < cell_size; k++)
         Q(k,i,j) = Q(k,i,j) -  dt/dy * ((nFy[k][j+1]  -  nFy[k][j]));

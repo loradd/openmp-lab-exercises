@@ -38,10 +38,11 @@ void validate(double *Q, int m, int n) {
 
 /* Flux function in the x-direction */
 void fx(double *Q, double **fq, int m, int n, int j) {  
+  int i;
   const double g = 9.81;
 
   #pragma omp for
-  for (int i = 0; i < m; i++) {
+  for (i = 0; i < m; i++) {
     fq[0][i] = Q(1, i, j);
     fq[1][i] = (pow(Q(1, i, j), 2) / Q(0, i, j))  + 
       (g * pow(Q(0, i, j), 2)) / 2.0;
@@ -52,10 +53,11 @@ void fx(double *Q, double **fq, int m, int n, int j) {
 
 /* Flux function in the y-direction */
 void fy(double *Q, double **fq, int m, int n, int i) {
+  int j;
   const double g= 9.81;
 
   #pragma omp for
-  for (int j = 0; j < n; j++) {
+  for (j = 0; j < n; j++) {
     fq[0][j] = Q(2, i, j);
     fq[1][j] = (Q(1, i, j) * Q(2, i, j)) / Q(0, i, j);    
     fq[2][j] = (pow(Q(2, i, j), 2) / Q(0, i, j))  + 
@@ -119,7 +121,7 @@ void solver(double *Q, double **ffx, double **ffy, double **nFx, double **nFy,
   
   steps = ceil(tend / dt);
   
-  #pragma omp parallel private(i, j, k, time, ffx, ffy, nFx, nFy)
+  #pragma omp parallel private(i, time, ffx, ffy, nFx, nFy)
   {
     /* Allocate memory for fluxes */
     ffx = (double **) malloc(cell_size * sizeof(double *));
@@ -142,7 +144,7 @@ void solver(double *Q, double **ffx, double **ffy, double **nFx, double **nFy,
     for (i = 0, time = 0.0; i < steps; i++, time += dt) { 
       
       /* Apply boundary condition */
-      #pragma omp for collapse(2) private(j, k)
+      #pragma omp for
       for (j = 1; j < n - 1 ; j++) {
         for (k = 0; k < cell_size; k++) {
           Q(k, 0, j) = bc_mask[k] *  Q(k, 1, j);
@@ -150,7 +152,7 @@ void solver(double *Q, double **ffx, double **ffy, double **nFx, double **nFy,
         }
       }
 
-      #pragma omp for collapse(2) private(j, k)
+      #pragma omp for
       for (j = 0; j < m; j++)  {
         for (k = 0; k < cell_size; k++) {
           Q(k, j, 0) = bc_mask[k] * Q(k, j, 1);

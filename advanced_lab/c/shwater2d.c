@@ -3,6 +3,7 @@
  *  using the Lax-Friedrich's scheme
  */
 
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>

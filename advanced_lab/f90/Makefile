@@ -18,7 +18,7 @@ DEST = shwater2d
 all: $(DEST)
 
 $(DEST): $(OBJS)
-	$(FC) $(FFLAGS) $(OBJS) -o $@	
+	$(FC) $(FFLAGS) $(OBJS) -o $@
 
 clean:
 	rm -f $(DEST) *.mod *.MOD *.o

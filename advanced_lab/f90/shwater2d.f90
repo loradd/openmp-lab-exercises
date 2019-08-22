@@ -128,6 +128,7 @@ end program shwater2d
 
 subroutine solver(Q, l, m, n, tend, dx, dy, dt, fx, fy)
   use types
+  use omp_lib
   implicit none
 
   !

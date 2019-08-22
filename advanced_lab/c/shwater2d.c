@@ -122,7 +122,7 @@ void solver(double *Q, double **ffx, double **ffy, double **nFx, double **nFy,
   
   steps = ceil(tend / dt);
   
-  #pragma omp parallel private(ffx, ffy, nFx, nFy)
+  #pragma omp parallel private(i, j, k, time, ffx, ffy, nFx, nFy)
   {
     /* Allocate memory for fluxes */
     ffx = (double **) malloc(cell_size * sizeof(double *));
@@ -141,7 +141,7 @@ void solver(double *Q, double **ffx, double **ffy, double **nFx, double **nFy,
       ffy[i] =  ffy[0] + i * n;
       nFy[i] =  nFy[0] + i * n;
     }
-
+	
     for (i = 0, time = 0.0; i < steps; i++, time += dt) { 
       
       /* Apply boundary condition */

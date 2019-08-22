@@ -3,7 +3,6 @@
  *  using the Lax-Friedrich's scheme
  */
 
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -39,11 +38,10 @@ void validate(double *Q, int m, int n) {
 
 /* Flux function in the x-direction */
 void fx(double *Q, double **fq, int m, int n, int j) {  
-  int i;
   const double g = 9.81;
 
   #pragma omp for
-  for (i = 0; i < m; i++) {
+  for (int i = 0; i < m; i++) {
     fq[0][i] = Q(1, i, j);
     fq[1][i] = (pow(Q(1, i, j), 2) / Q(0, i, j))  + 
       (g * pow(Q(0, i, j), 2)) / 2.0;
@@ -54,11 +52,10 @@ void fx(double *Q, double **fq, int m, int n, int j) {
 
 /* Flux function in the y-direction */
 void fy(double *Q, double **fq, int m, int n, int i) {
-  int j;
   const double g= 9.81;
 
   #pragma omp for
-  for (j = 0; j < n; j++) {
+  for (int j = 0; j < n; j++) {
     fq[0][j] = Q(2, i, j);
     fq[1][j] = (Q(1, i, j) * Q(2, i, j)) / Q(0, i, j);    
     fq[2][j] = (pow(Q(2, i, j), 2) / Q(0, i, j))  + 
@@ -80,12 +77,12 @@ void laxf_scheme_2d(double *Q, double **ffx, double **ffy, double **nFx, double 
     #pragma omp single
     fx(Q, ffx, m, n, i);
     
-    #pragma omp for
+    #pragma omp for private(j, k)
     for (j = 1; j < m; j++) 
       for (k = 0; k < cell_size;  k++) 
         nFx[k][j] = 0.5 * ((ffx[k][j-1] + ffx[k][j]) - dx/dt * (Q(k, j, i) - Q(k, j-1, i)));
     
-    #pragma omp for
+    #pragma omp for private(j, k)
     for (j = 1; j < m-1; j++)
       for (k = 0; k < cell_size;  k++) 
         Q(k, j, i) = Q(k, j, i)  - dt/dx * ((nFx[k][j+1] - nFx[k][j]));
@@ -97,12 +94,12 @@ void laxf_scheme_2d(double *Q, double **ffx, double **ffy, double **nFx, double 
     #pragma omp single
     fy(Q, ffy, m, n, i);
     
-    #pragma omp for
+    #pragma omp for private(j, k)
     for (j = 1; j < n; j++)
       for (k = 0; k < cell_size; k++)
         nFy[k][j] = 0.5 * ((ffy[k][j-1] + ffy[k][j]) - dy/dt * (Q(k, i, j) - Q(k, i, j -1)));
     
-    #pragma omp for
+    #pragma omp for private(j, k)
     for (j = 1; j <  n-1; j++) 
       for (k = 0; k < cell_size; k++)
         Q(k,i,j) = Q(k,i,j) -  dt/dy * ((nFy[k][j+1]  -  nFy[k][j]));
@@ -141,11 +138,11 @@ void solver(double *Q, double **ffx, double **ffy, double **nFx, double **nFy,
       ffy[i] =  ffy[0] + i * n;
       nFy[i] =  nFy[0] + i * n;
     }
-	
+
     for (i = 0, time = 0.0; i < steps; i++, time += dt) { 
       
       /* Apply boundary condition */
-      #pragma omp for collapse(2)
+      #pragma omp for collapse(2) private(j, k)
       for (j = 1; j < n - 1 ; j++) {
         for (k = 0; k < cell_size; k++) {
           Q(k, 0, j) = bc_mask[k] *  Q(k, 1, j);
@@ -153,7 +150,7 @@ void solver(double *Q, double **ffx, double **ffy, double **nFx, double **nFy,
         }
       }
 
-      #pragma omp for collapse(2)
+      #pragma omp for collapse(2) private(j, k)
       for (j = 0; j < m; j++)  {
         for (k = 0; k < cell_size; k++) {
           Q(k, j, 0) = bc_mask[k] * Q(k, j, 1);
@@ -164,6 +161,16 @@ void solver(double *Q, double **ffx, double **ffy, double **nFx, double **nFy,
       /* Update all volumes with the Lax-Friedrich's scheme */     
       laxf_scheme_2d(Q, ffx, ffy, nFx, nFy, m, n, dx, dy, dt);  
     }
+
+    free(ffx[0]);
+    free(ffy[0]);
+    free(nFx[0]);
+    free(nFy[0]);
+
+    free(ffx);
+    free(ffy);
+    free(nFx);
+    free(nFy);
   }
 }
   
@@ -269,15 +276,15 @@ int main(int argc, char **argv) {
   free(x);
   free(y);
 
-  free(ffx[0]);
-  free(ffy[0]);
-  free(nFx[0]);
-  free(nFy[0]);
+  // free(ffx[0]);
+  // free(ffy[0]);
+  // free(nFx[0]);
+  // free(nFy[0]);
 
-  free(ffx);
-  free(ffy);
-  free(nFx);
-  free(nFy);
+  // free(ffx);
+  // free(ffy);
+  // free(nFx);
+  // free(nFy);
 
   return 0;    
 }

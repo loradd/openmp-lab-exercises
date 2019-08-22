@@ -153,13 +153,11 @@ subroutine solver(Q, l, m, n, tend, dx, dy, dt, fx, fy)
   !
   ! This is the main time stepping loop
   !
+  !omp parallel
   do i=1,steps
-     
      !
      ! Apply boundary condition
      !
-     !omp parallel private(i, j, time)
-     
      !omp do
      do j  = 2, n - 1
         Q(:, 1, j) = bc_mask * Q(:, 2, j)
@@ -177,9 +175,8 @@ subroutine solver(Q, l, m, n, tend, dx, dy, dt, fx, fy)
      !
      call laxf_scheme_2d(Q, l, m, n, dx, dy, dt, fx, fy)
      time = time + dt
-     !omp end parallel
   end do
-
+  !omp end parallel
 end subroutine solver
 
 !-----------------------------------------------------------------------
@@ -204,38 +201,35 @@ subroutine laxf_scheme_2d(Q, l, m, n, dx, dy, dt, fx, fy)
   !
   ! Calculate and update fluxes in the x-direction
   !
+  !omp do private(j, ffx, nfx)
   do i=2,n
      call fx(Q(:,:,i), ffx, l, m)
-     !omp do private(ffx, nFx)
      do j=2,m
         nFx(:,j) = 0.5  * ((ffx(:,j-1) + ffx(:,j)) - &
              dx/dt * (Q(:,j,i) - Q(:,j-1,i)))
-     end do     
-     !omp end do
-     !omp do private(ffx, nFx)
+     end do
      do j=2,m-1
         Q(:,j,i) = Q(:,j,i) -  dt/dx * ((nFx(:,j+1)  -  nFx(:,j)))
      end do
-     !omp end do
   end do
+  !omp end do
 
   !
   ! Calculate and update fluxes in the y-direction
   !
+  !omp do private(j, ffy, nFy)
   do i=2,m
      call fy(Q(:,i,:), ffy, l, n)
-     !omp do private(ffy, nFy)
      do j=2,n
         nFy(:,j) = 0.5  * ((ffy(:,j-1) + ffy(:,j)) - &
              dy/dt * (Q(:,i,j) - Q(:,i,j-1)))
      end do
-     !omp end do
      !omp do private(ffy, nFy)
      do j=2,n-1
         Q(:,i,j) = Q(:,i,j) -  dt/dy * ((nFy(:,j+1)  -  nFy(:,j)))
-     end do 
-     !omp end do    
+     end do     
   end do
+  !omp end do
 
 end subroutine laxf_scheme_2d
 

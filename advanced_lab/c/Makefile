@@ -14,8 +14,13 @@ DEST = shwater2d
 
 all: $(DEST)
 
+local: $(DEST).local
+
 $(DEST): $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o $@ -lm	
+	$(CC) $(CFLAGS) $(OBJS) -o $@ -lm
+
+$(DEST).local: $(OBJS)
+	$(CC) -O2 -Xpreprocessor -fopenmp -lomp $(OBJS) -o $(DEST)
 
 clean:
 	rm -f $(DEST) *.o

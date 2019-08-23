@@ -150,31 +150,38 @@ subroutine solver(Q, l, m, n, tend, dx, dy, dt, fx, fy)
   steps = tend / dt
   time = 0d0
 
+	!$omp parallel
+
   !
   ! This is the main time stepping loop
   !
   do i=1,steps
-     
      !
      ! Apply boundary condition
      !
+     !$omp do
      do j  = 2, n - 1
         Q(:, 1, j) = bc_mask * Q(:, 2, j)
         Q(:, m, j) = bc_mask * Q(:, m-1, j)
      end do
-
+     !$omp end do
+		
+		 !$omp do
      do j  = 1, m
         Q(:, j, 1) = bc_mask *  Q(:, j , 2)
         Q(:, j, n) = bc_mask *  Q(:, j, n-1)
      end do
-     
+		 !$omp end do
+
      !
      ! Update all volumes with the Lax-Friedrich's scheme
      !
      call laxf_scheme_2d(Q, l, m, n, dx, dy, dt, fx, fy)
      time = time + dt
-
+		
   end do
+	
+	!$omp end parallel
 
 end subroutine solver
 
@@ -196,10 +203,11 @@ subroutine laxf_scheme_2d(Q, l, m, n, dx, dy, dt, fx, fy)
   real(kind=dp), intent(in) :: dx, dy, dt
   external fx, fy
   integer i,j
-
+	
   !
   ! Calculate and update fluxes in the x-direction
   !
+  !$omp do private(j, ffx, nFx)
   do i=2,n
      call fx(Q(:,:,i), ffx, l, m)
      do j=2,m
@@ -210,10 +218,12 @@ subroutine laxf_scheme_2d(Q, l, m, n, dx, dy, dt, fx, fy)
         Q(:,j,i) = Q(:,j,i) -  dt/dx * ((nFx(:,j+1)  -  nFx(:,j)))
      end do
   end do
+	!$omp end do
 
   !
   ! Calculate and update fluxes in the y-direction
   !
+  !$omp do private(j, ffy, nFy)
   do i=2,m
      call fy(Q(:,i,:), ffy, l, n)
      do j=2,n
@@ -224,7 +234,7 @@ subroutine laxf_scheme_2d(Q, l, m, n, dx, dy, dt, fx, fy)
         Q(:,i,j) = Q(:,i,j) -  dt/dy * ((nFy(:,j+1)  -  nFy(:,j)))
      end do     
   end do
-
+  !$omp end do
 end subroutine laxf_scheme_2d
 
 !-----------------------------------------------------------------------
